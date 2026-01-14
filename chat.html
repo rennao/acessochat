@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversas - DNOVO</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Lista de Conversas -->
+        <div class="conversas-lista" id="conversas-lista">
+            <div class="conversas-header">
+                <h2>CONVERSAS</h2>
+            </div>
+            <div class="conversas-items" id="conversas-items">
+                <!-- As conversas serão carregadas aqui -->
+            </div>
+        </div>
+
+        <!-- Área de Conversa Detalhada -->
+        <div class="conversa-detalhe" id="conversa-detalhe">
+            <div class="conversa-header-detalhe">
+                <button class="btn-voltar" id="btn-voltar">&lt; Voltar</button>
+                <div class="conversa-info-header">
+                    <div class="avatar-pequeno"></div>
+                    <div>
+                        <h3 id="conversa-nome">Selecione uma conversa</h3>
+                        <p id="conversa-status">visto por último</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mensagens-area" id="mensagens-area">
+                <!-- As mensagens serão carregadas aqui -->
+            </div>
+
+            <div class="conversa-input">
+                <form id="form-mensagem" class="form-mensagem">
+                    <input 
+                        type="text" 
+                        id="input-mensagem" 
+                        placeholder="Digite sua mensagem..." 
+                        class="input-msg"
+                    >
+                    <button type="submit" class="btn-enviar">Enviar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="database.js"></script>
+    <script src="chat.js"></script>
+</body>
+</html>

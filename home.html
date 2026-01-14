@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNOVO</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <h1>LOGO E NOME DNOVO</h1>
+            </div>
+            <div class="auth-buttons">
+                <button class="btn btn-cadastro">cadastrar</button>
+                <button class="btn btn-login">Login</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Seção de Ações -->
+    <section class="acoes">
+        <div class="acoes-container">
+            <button class="btn btn-acao btn-prestar">Prestar serviços</button>
+            <button class="btn btn-acao btn-contratar">Contratar serviços</button>
+        </div>
+    </section>
+
+    <!-- Seção de Formulário para Adicionar Anúncio -->
+    <section class="formulario-anuncio">
+        <h2>Adicionar Anúncio</h2>
+        <form id="form-anuncio" class="form-anuncio">
+            <div class="form-group">
+                <label for="empresa-nome">Nome da Empresa:</label>
+                <input type="text" id="empresa-nome" name="empresa-nome" required>
+            </div>
+            <div class="form-group">
+                <label for="anuncio-titulo">Título do Anúncio:</label>
+                <input type="text" id="anuncio-titulo" name="anuncio-titulo" required>
+            </div>
+            <div class="form-group">
+                <label for="anuncio-imagem">URL da Imagem:</label>
+                <input type="url" id="anuncio-imagem" name="anuncio-imagem" required>
+            </div>
+            <div class="form-group">
+                <label for="anuncio-descricao">Descrição:</label>
+                <textarea id="anuncio-descricao" name="anuncio-descricao" rows="4" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-enviar-anuncio">Publicar Anúncio</button>
+        </form>
+    </section>
+
+    <!-- Seção de Anúncios -->
+    <main class="anuncios-section">
+        <h2>Anúncios Publicados</h2>
+        <div class="anuncios-container">
+            <!-- Container para anúncios - deixado vazio para preencher depois -->
+            <div id="anuncios-area" class="anuncios-area">
+                <!-- Os anúncios serão adicionados aqui via JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Botão "Saiba nossa causa" -->
+        <button class="btn btn-causa">Saiba nossa causa :)</button>
+    </main>
+
+    <script src="database.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

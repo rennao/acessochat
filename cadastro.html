@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastre-se - DNOVO</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="auth-container cadastro-container">
+        <h1>Cadastre-se</h1>
+        
+        <form id="form-cadastro" class="form-auth">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="seu@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="senha">Senha:</label>
+                <input type="password" id="senha" name="senha" placeholder="Digite sua senha" required>
+            </div>
+
+            <!-- Seleção de Tipo de Usuário -->
+            <div class="tipo-usuario">
+                <label>Escolha seu tipo de cadastro:</label>
+                <div class="tipo-botoes">
+                    <button type="button" class="btn-tipo ativo" data-tipo="empresa">
+                        Empresa
+                    </button>
+                    <button type="button" class="btn-tipo" data-tipo="prestador">
+                        Prestador
+                    </button>
+                </div>
+                <input type="hidden" id="tipo-usuario" name="tipo-usuario" value="empresa" required>
+            </div>
+
+            <button type="submit" class="btn btn-cadastrar">cadastrar</button>
+        </form>
+
+        <p class="link-auth">Já tem uma conta? <a href="login.html">clique aqui</a></p>
+    </div>
+
+    <script src="database.js"></script>
+    <script>
+        // Seleção de tipo de usuário
+        const botoesTipo = document.querySelectorAll('.btn-tipo');
+        const inputTipo = document.getElementById('tipo-usuario');
+
+        botoesTipo.forEach(botao => {
+            botao.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remove classe ativo de todos
+                botoesTipo.forEach(b => b.classList.remove('ativo'));
+                
+                // Adiciona classe ativo ao clicado
+                botao.classList.add('ativo');
+                
+                // Atualiza valor do input
+                inputTipo.value = botao.dataset.tipo;
+            });
+        });
+
+        // Validação do formulário
+        const formCadastro = document.getElementById('form-cadastro');
+        formCadastro.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+            const tipo = document.getElementById('tipo-usuario').value;
+            
+            if (email && senha && tipo) {
+                // Usar o banco de dados
+                const usuario = db.insert('usuarios', {
+                    email,
+                    senha,
+                    tipo,
+                    dataCadastro: new Date().toLocaleDateString('pt-BR')
+                });
+                
+                if (usuario) {
+                    alert('Cadastro realizado com sucesso! Você será redirecionado...');
+                    console.log('Usuário cadastrado:', usuario);
+                    window.location.href = 'home.html';
+                } else {
+                    alert('❌ Erro ao cadastrar!\n\nEste email já está registrado no sistema.\nTente outro email ou faça login.');
+                }
+            } else {
+                alert('Por favor, preencha todos os campos!');
+            }
+        });
+    </script>
+</body>
+</html>
