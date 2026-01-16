@@ -7,6 +7,7 @@ class ChatSystem {
     constructor() {
         this.conversaAtiva = null;
         this.usuarioLogado = null;
+        this.modo = 'conversas'; // 'conversas' ou 'contatos'
         this.init();
     }
 
@@ -25,7 +26,10 @@ class ChatSystem {
         const params = new URLSearchParams(window.location.search);
         const conversaIdParam = params.get('conversa');
 
-        this.carregarConversas();
+        // Criar botão menu dinamicamente
+        this.criarBotaoMenu();
+
+        this.carregarConteudo();
         this.setupEventos();
         this.adicionarConversasDemoTest();
 
@@ -43,20 +47,36 @@ class ChatSystem {
     adicionarConversasDemoTest() {
         const conversasExistentes = db.count('conversas');
         if (conversasExistentes === 0) {
-            // Criar alguns usuários de teste
-            const usuarios = [
-                { id: 2, email: 'pintor@email.com', nome: 'pintor', tipo: 'prestador' },
-                { id: 3, email: 'empresa@email.com', nome: 'empresa de fretado', tipo: 'empresa' },
-                { id: 4, email: 'faxineiro@email.com', nome: 'faxineiro', tipo: 'prestador' }
+            // Criar alguns usuários de teste se não existirem
+            const usuariosTest = [
+                { email: 'pintor@email.com', senha: '123', tipo: 'prestador' },
+                { email: 'empresa@email.com', senha: '123', tipo: 'empresa' },
+                { email: 'faxineiro@email.com', senha: '123', tipo: 'prestador' }
             ];
 
+            const usuariosInseridos = [];
+            usuariosTest.forEach(user => {
+                const existing = db.select('usuarios', { email: user.email });
+                if (existing.length === 0) {
+                    const inserted = db.insert('usuarios', {
+                        email: user.email,
+                        senha: user.senha,
+                        tipo: user.tipo,
+                        dataCadastro: new Date().toLocaleDateString('pt-BR')
+                    });
+                    usuariosInseridos.push({ ...user, id: inserted.id });
+                } else {
+                    usuariosInseridos.push({ ...user, id: existing[0].id });
+                }
+            });
+
             // Criar conversas de teste
-            usuarios.forEach(usuario => {
+            usuariosInseridos.forEach(usuario => {
                 const conversa = db.insert('conversas', {
                     usuarioId1: this.usuarioLogado.usuarioId,
                     usuarioId2: usuario.id,
                     nome1: 'Você',
-                    nome2: usuario.nome,
+                    nome2: usuario.email,
                     ultimaMensagem: 'Clique para abrir conversa...',
                     dataUltimaMensagem: new Date().toLocaleDateString('pt-BR'),
                     naoLidas1: Math.floor(Math.random() * 3),
@@ -65,7 +85,7 @@ class ChatSystem {
 
                 // Adicionar mensagens de teste
                 const mensagensTest = [
-                    { remetenteId: usuario.id, remetente: usuario.nome, conteudo: 'Olá! Posso ajudar?' },
+                    { remetenteId: usuario.id, remetente: usuario.email, conteudo: 'Olá! Posso ajudar?' },
                     { remetenteId: this.usuarioLogado.usuarioId, remetente: 'Você', conteudo: 'Sim, obrigado!' }
                 ];
 
@@ -85,20 +105,228 @@ class ChatSystem {
     }
 
     /**
+     * Cria o botão menu dinamicamente
+     */
+    criarBotaoMenu() {
+        const container = document.querySelector('.chat-container');
+        if (!container) {
+            console.error('Container não encontrado!');
+            return;
+        }
+        
+        // Criar botão de forma mais simples
+        const btnMenu = document.createElement('button');
+        btnMenu.id = 'btn-menu';
+        btnMenu.innerHTML = '☰';
+        btnMenu.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 99999;
+            background: #5a7fb0;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        `;
+        
+        btnMenu.addEventListener('mouseover', () => {
+            btnMenu.style.backgroundColor = '#475a8c';
+        });
+        
+        btnMenu.addEventListener('mouseout', () => {
+            btnMenu.style.backgroundColor = '#5a7fb0';
+        });
+        
+        document.body.appendChild(btnMenu);
+    }
+
+    /**
      * Configura os eventos do chat
      */
     setupEventos() {
-        const btnVoltar = document.getElementById('btn-voltar');
         const formMensagem = document.getElementById('form-mensagem');
+        const btnToggleContatos = document.getElementById('btn-toggle-contatos');
+        const btnMenu = document.getElementById('btn-menu');
 
-        btnVoltar.addEventListener('click', () => {
-            this.voltarParaLista();
+        if (formMensagem) {
+            formMensagem.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.enviarMensagem();
+            });
+        }
+
+        if (btnToggleContatos) {
+            btnToggleContatos.addEventListener('click', () => {
+                this.toggleModo();
+            });
+        }
+
+        if (btnMenu) {
+            btnMenu.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleSidebar();
+            });
+        } else {
+            console.error('Botão menu não encontrado!');
+        }
+    }
+
+    /**
+     * Carrega o conteúdo baseado no modo atual
+     */
+    carregarConteudo() {
+        if (this.modo === 'conversas') {
+            this.carregarConversas();
+        } else {
+            this.carregarContatos();
+        }
+    }
+
+    /**
+     * Alterna a visibilidade da barra lateral
+     */
+    toggleSidebar() {
+        const sidebar = document.getElementById('conversas-lista');
+        const container = document.querySelector('.chat-container');
+        
+        if (sidebar && container) {
+            sidebar.classList.toggle('open');
+            container.classList.toggle('sidebar-open');
+        } else {
+            console.error('Elementos não encontrados para toggle');
+        }
+    }
+
+    /**
+     * Alterna entre modo conversas e contatos
+     */
+    toggleModo() {
+        this.modo = this.modo === 'conversas' ? 'contatos' : 'conversas';
+        const header = document.querySelector('.conversas-header h2');
+        const btnToggle = document.getElementById('btn-toggle-contatos');
+        
+        if (this.modo === 'conversas') {
+            header.textContent = 'CONVERSAS';
+            btnToggle.textContent = 'Contatos';
+        } else {
+            header.textContent = 'CONTATOS';
+            btnToggle.textContent = 'Conversas';
+        }
+        
+        this.carregarConteudo();
+        
+        // Se estamos em modo contatos mas temos uma conversa ativa, voltar para conversas
+        if (this.modo === 'contatos' && this.conversaAtiva) {
+            this.modo = 'conversas';
+            header.textContent = 'CONVERSAS';
+            btnToggle.textContent = 'Contatos';
+            this.carregarConteudo();
+        }
+        
+        // Garantir que a sidebar esteja aberta quando alternar modos
+        const sidebar = document.getElementById('conversas-lista');
+        const container = document.querySelector('.chat-container');
+        if (!sidebar.classList.contains('open')) {
+            sidebar.classList.add('open');
+            container.classList.add('sidebar-open');
+        }
+    }
+
+    /**
+     * Carrega todos os contatos disponíveis
+     */
+    carregarContatos() {
+        const usuarios = db.select('usuarios');
+        const contatos = usuarios.filter(u => u.id !== this.usuarioLogado.usuarioId);
+
+        const conversasItems = document.getElementById('conversas-items');
+        conversasItems.innerHTML = '';
+
+        contatos.forEach(contato => {
+            const element = this.criarElementoContato(contato);
+            conversasItems.appendChild(element);
+        });
+    }
+
+    /**
+     * Cria um elemento de contato na lista
+     */
+    criarElementoContato(contato) {
+        const div = document.createElement('div');
+        div.className = 'conversa-item';
+        div.innerHTML = `
+            <div class="conversa-avatar"></div>
+            <div class="conversa-conteudo">
+                <div class="conversa-nome-info">
+                    <h4>${contato.email}</h4>
+                    <span class="conversa-status">${contato.tipo}</span>
+                </div>
+                <p class="conversa-ultima-msg">Clique para iniciar conversa</p>
+            </div>
+        `;
+
+        div.addEventListener('click', () => {
+            this.iniciarConversaComContato(contato);
         });
 
-        formMensagem.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.enviarMensagem();
-        });
+        return div;
+    }
+
+    /**
+     * Inicia uma conversa com um contato
+     */
+    iniciarConversaComContato(contato) {
+        // Verificar se já existe uma conversa
+        const conversas = db.select('conversas');
+        let conversaExistente = conversas.find(c => 
+            (c.usuarioId1 === this.usuarioLogado.usuarioId && c.usuarioId2 === contato.id) ||
+            (c.usuarioId1 === contato.id && c.usuarioId2 === this.usuarioLogado.usuarioId)
+        );
+
+        if (conversaExistente) {
+            // Abrir conversa existente
+            this.abrirConversa(conversaExistente.id);
+        } else {
+            // Criar nova conversa
+            const novaConversa = db.insert('conversas', {
+                usuarioId1: this.usuarioLogado.usuarioId,
+                usuarioId2: contato.id,
+                nome1: 'Você',
+                nome2: contato.email,
+                ultimaMensagem: 'Conversa iniciada',
+                dataUltimaMensagem: new Date().toLocaleDateString('pt-BR'),
+                naoLidas1: 0,
+                naoLidas2: 0
+            });
+
+            // Adicionar mensagem inicial
+            db.insert('mensagens', {
+                conversaId: novaConversa.id,
+                remetenteId: this.usuarioLogado.usuarioId,
+                remetente: 'Você',
+                conteudo: 'Olá! Gostaria de conversar.',
+                lida: false,
+                dataMensagem: new Date().toLocaleDateString('pt-BR'),
+                horaMensagem: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            });
+
+            // Recarregar lista e abrir nova conversa
+            this.carregarConteudo();
+            this.abrirConversa(novaConversa.id);
+            
+            // Fechar sidebar para focar na conversa
+            const sidebar = document.getElementById('conversas-lista');
+            const container = document.querySelector('.chat-container');
+            sidebar.classList.remove('open');
+            container.classList.remove('sidebar-open');
+        }
     }
 
     /**
@@ -162,9 +390,9 @@ class ChatSystem {
             ? this.conversaAtiva.nome2 
             : this.conversaAtiva.nome1;
 
-        // Mostrar a conversa
-        document.getElementById('conversas-lista').style.display = 'none';
-        document.getElementById('conversa-detalhe').style.display = 'flex';
+        // Manter a lista lateral sempre visível
+        // document.getElementById('conversas-lista').style.display = 'none';
+        // document.getElementById('conversa-detalhe').style.display = 'flex';
 
         // Atualizar header
         document.getElementById('conversa-nome').textContent = nomeConversa;
@@ -175,6 +403,12 @@ class ChatSystem {
 
         // Marcar como lidas
         this.marcarComoLidas(conversaId);
+        
+        // Fechar sidebar para focar na conversa
+        const sidebar = document.getElementById('conversas-lista');
+        const container = document.querySelector('.chat-container');
+        sidebar.classList.remove('open');
+        container.classList.remove('sidebar-open');
     }
 
     /**
@@ -267,13 +501,12 @@ class ChatSystem {
     }
 
     /**
-     * Volta para a lista de conversas
+     * Recarrega a lista lateral
      */
-    voltarParaLista() {
+    recarregarLista() {
         this.conversaAtiva = null;
-        document.getElementById('conversas-lista').style.display = 'flex';
-        document.getElementById('conversa-detalhe').style.display = 'none';
-        this.carregarConversas();
+        // Lista sempre visível, apenas recarregar conteúdo
+        this.carregarConteudo();
     }
 }
 
